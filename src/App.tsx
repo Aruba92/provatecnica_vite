@@ -1,35 +1,68 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { useState, useEffect } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+import Pagination from "./components/Pagination/Pagination";
+import PokemonElement from "./components/PokemonElement/PokemonElement";
+import Pokemon from "./types/Pokemon";
+import {APIPokemonService} from "./services/API";
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+export default function App() {
+/*Fetch Data*/
+const [data, setData] = useState<Pokemon[]>([]);
+/*ViewType*/
+let viewTypeValue = "list";
+if (window.localStorage.getItem("viewType")){
+  viewTypeValue = window.localStorage.getItem("viewType")!;
+}
+const [viewType, setViewType] = useState<string>(viewTypeValue);
+/*Pagination*/
+let currentPageValue = 1;
+if (window.localStorage.getItem("currentPage")){
+  currentPageValue = parseInt(window.localStorage.getItem("currentPage")!);
+}
+const [currentPage, setCurrentPage] = useState<number>(currentPageValue);
+/* const [elementsPerPage, setElementsPerPage] = useState<number>(10); */
+const elementsPerPage:number = 40;
+
+const ApiService = new APIPokemonService();
+useEffect(() => {
+  ApiService.APIcallLimit(setData, "?limit=160");
+}, [])
+
+useEffect(()=>{
+  window.localStorage.setItem("currentPage", currentPage.toString());
+},[currentPage])
+useEffect(()=>{
+  window.localStorage.setItem("viewType", viewType);
+},[viewType])
+
+function handlePagination (pageNumber:number) {
+  setCurrentPage(pageNumber);
 }
 
-export default App
+function setView(type:string){
+  if (type==="list") {
+    setViewType("list");
+    setCurrentPage(1);
+  }else{
+    setViewType("grid");
+    setCurrentPage(1);
+  }
+}
+
+return (
+  <main className="main">
+    <h1>Llista de Pokemons</h1>
+    <div className="viewButtons">
+      <button className={viewType==="list" ? "active":""} onClick={()=>setView("list")}>List</button>
+      <button className={viewType==="grid" ? "active":""} onClick={()=>setView("grid")}>Grid</button>
+    </div>
+
+    <div className={viewType==="list" ? "pokemonsBoxList" : "pokemonsBoxGrid"}>
+      <PokemonElement pokemonList={data.slice((currentPage-1)*elementsPerPage, currentPage*elementsPerPage)}></PokemonElement>
+    </div>
+
+    <Pagination elementsPerPage={elementsPerPage} dataLength={Object.keys(data).length} handlePagination={handlePagination} currentPage={currentPage}></Pagination>
+  </main>
+);
+}
