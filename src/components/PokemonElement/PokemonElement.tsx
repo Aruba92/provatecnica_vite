@@ -6,12 +6,10 @@ interface Props{
 }
 
 export default function PokemonElement ( {pokemonList}:Props ) :JSX.Element {
-    let href = "";
-
     return(
         <>
             {pokemonList.map((element:any, index:number) => (
-                <a href={href} key={index}>
+                <a href={"pokemon/"+element.name} key={index}>
                     <p className={styles.pokemonElement}>{element.name}</p>
                 </a>
             ))}
